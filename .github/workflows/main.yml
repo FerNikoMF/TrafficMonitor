@@ -16,6 +16,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install MFC libraries
+      run: choco install visualstudio2022-workload-vctools --package-parameters "--add Microsoft.VisualStudio.Component.VC.ATLMFC" -y
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1.3
 

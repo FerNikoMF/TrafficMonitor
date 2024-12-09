@@ -1,5 +1,9 @@
 name: Release CI
-on: push
+on:
+  push:
+    tags: # Запускается при пуше тега
+      - "v*"
+
 jobs:
   x64_build:
     runs-on: windows-latest
@@ -20,7 +24,7 @@ jobs:
         format: YYYYMMDD_HHmmss
         utcOffset: "+08:00"
       
-    - name : Upload artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: x64_${{ steps.current-time.outputs.formattedTime }}_TrafficMonitor
@@ -28,11 +32,21 @@ jobs:
           Bin/x64/Release/TrafficMonitor.exe
           Bin/x64/Release/*.dll
 
-    - name : Upload pdb files
+    - name: Upload pdb files
       uses: actions/upload-artifact@v3
       with:
         name: x64_${{ steps.current-time.outputs.formattedTime }}_pdb
         path: Bin/x64/Release/*.pdb
+
+    - name: Create GitHub Release
+      if: ${{ github.ref_type == 'tag' }}
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          Bin/x64/Release/TrafficMonitor.exe
+          Bin/x64/Release/*.dll
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   x86_build:
     runs-on: windows-latest
@@ -53,7 +67,7 @@ jobs:
         format: YYYYMMDD_HHmmss
         utcOffset: "+08:00"
       
-    - name : Upload artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: x86_${{ steps.current-time.outputs.formattedTime }}_TrafficMonitor
@@ -61,36 +75,18 @@ jobs:
           Bin/Release/TrafficMonitor.exe
           Bin/Release/*.dll
       
-    - name : Upload pdb files
+    - name: Upload pdb files
       uses: actions/upload-artifact@v3
       with:
         name: x86_${{ steps.current-time.outputs.formattedTime }}_pdb
         path: Bin/Release/*.pdb
 
-  # winXP_build:
-    # runs-on: windows-latest
-
-    # steps:
-    # - uses: actions/checkout@v3
-      
-    # - name: Add msbuild to PATH
-      # uses: microsoft/setup-msbuild@v1.1.3
-      
-    # - name: Run msbuild
-      # run: |
-        # set ExternalCompilerOptions=/DCOMPILE_FOR_WINXP
-        # msbuild -p:configuration=release -p:platform=x86 -p:platformToolset=v140_xp
-      # shell: cmd
-      
-    # - name: Get current time
-      # uses: josStorer/get-current-time@v2.0.2
-      # id: current-time
-      # with:
-        # format: YYYYMMDD_HHmmss
-        # utcOffset: "+08:00"
-      
-    # - name : Upload artifact
-      # uses: actions/upload-artifact@v3
-      # with:
-        # name: winXP_${{ steps.current-time.outputs.formattedTime }}_TrafficMonitor
-        # path: Bin/Release/TrafficMonitor.exe
+    - name: Create GitHub Release
+      if: ${{ github.ref_type == 'tag' }}
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          Bin/Release/TrafficMonitor.exe
+          Bin/Release/*.dll
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

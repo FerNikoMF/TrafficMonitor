@@ -1,0 +1,61 @@
+name: Build and Release EXE
+
+on:
+  push:
+    branches:
+      - master  # Запускать сборку при пуше в ветку master
+  pull_request:
+    branches:
+      - master  # Запускать сборку для PR
+  workflow_dispatch: # Позволяет вручную запускать Workflow
+
+jobs:
+  build:
+    runs-on: windows-latest  # Используем Windows для сборки
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Install dependencies
+      run: |
+        choco install visualstudio2022buildtools --no-progress -y
+        choco install visualstudio2022-workload-vctools --no-progress -y
+
+    - name: Build project
+      run: msbuild /p:Configuration=Release /p:Platform=x64 YOUR_PROJECT.sln
+
+    - name: Archive EXE
+      run: |
+        mkdir build
+        copy YOUR_PROJECT\bin\Release\YOUR_PROJECT.exe build\
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: exe-file
+        path: build/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: exe-file
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.run_number }}
+        release_name: Release ${{ github.run_number }}
+        draft: false
+        prerelease: false
+        files: build/YOUR_PROJECT.exe
